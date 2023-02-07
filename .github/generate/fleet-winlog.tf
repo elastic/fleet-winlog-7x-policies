@@ -189,35 +189,3 @@ resource "local_file" "readme" {
   })
   filename = "${path.module}/../../README.md"
 }
-
-// Create a package policy for each of the Winlogbeat modules (security, powershell, sysmon).
-// If the policy already exists then this will fail. If this is uncommented then it will
-// install the package policies.
-#resource "null_resource" "create-package-policies" {
-#  for_each = local.policy_map
-#
-#  // API docs:
-#  // https://www.elastic.co/guide/en/fleet/8.6/fleet-api-docs.html#create-integration-policy-api
-#  provisioner "local-exec" {
-#    command = <<EOT
-#bash -c 'curl -v -k \
-#  -XPOST \
-#  --fail-with-body \
-#  --header "Content-Type: application/json" \
-#  --header "kbn-xsrf: true" \
-#  --header "Authorization: ApiKey $API_KEY" \
-#  "$KIBANA_URL/api/fleet/package_policies" \
-#  -d @<(cat "${path.module}/../../policy-${each.key}.json" | envsubst)'
-#EOT
-#    environment = {
-#      API_KEY = var.api_key
-#      KIBANA_URL = var.kibana_url
-#      AGENT_POLICY_ID = var.agent_policy_id
-#    }
-#  }
-#
-#  depends_on = [null_resource.pretty-policies]
-#  triggers = {
-#    always_run = timestamp()
-#  }
-#}

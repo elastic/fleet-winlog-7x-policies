@@ -1,0 +1,55 @@
+name: 'Test'
+
+# **What it does**: Verify code is formatted and generated code is up-to-date and committed.
+# **Why we have it**: To prevent drift from the generated code.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Install moreutils (for sponge)
+        run: sudo apt-get install -y moreutils
+
+      - name: Terraform init
+        id: tf-init
+        run: terraform init -no-color
+        working-directory: .github/generate
+
+      - name: Terraform fmt
+        id: tf-fmt
+        run: terraform fmt -no-color -check
+        working-directory: .github/generate
+
+      - name: Terraform Apply
+        id: tf-apply
+        run: terraform apply -no-color -auto-approve
+        working-directory: .github/generate
+
+      - name: Check for uncommitted changes
+        run: git diff && git diff --quiet
+
+# TODO: Add a test job that will:
+#   Spin up Elastic Cloud.
+#   Create agent policy.
+#   Add winlog integration packages.
+#   Get enrollment key.
+#   Enroll a Windows Agent.
+#   Verify data is ingested.
+#   Tear down elastic cloud instance.

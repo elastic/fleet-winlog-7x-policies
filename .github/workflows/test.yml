@@ -14,6 +14,9 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  TF_VAR_env_id: ${{github.run_id}}
+
 jobs:
   lint-generate:
     runs-on: ubuntu-latest
@@ -74,6 +77,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
 
       - name: Terraform init
         run: terraform init -no-color
@@ -85,17 +90,107 @@ jobs:
         env:
           EC_API_KEY: ${{ secrets.EC_API_KEY }}
 
+      - name: Load Terraform Outputs
+        id: tf_output
+        # NOTE: Masking could be added with this line, but masking prevents
+        # passing the value as an output.
+        # terraform output -json | jq -r 'to_entries | .[].value | select(.sensitive == true) | "::add-mask::" + .value'
+        run: |
+          terraform output -json | jq -r 'to_entries | .[] | .key +"=" + .value.value' >> $GITHUB_OUTPUT
+        working-directory: .github/deploy
+
       - name: Persist terraform state
+        if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
           name: tfstate
           path: .github/deploy/terraform.tfstate*
+          retention-days: 1
+    outputs:
+      elasticsearch_url: ${{ steps.tf_output.outputs.elasticsearch_url }}
+      count_reader_api_key: ${{ steps.tf_output.outputs.count_reader_api_key }}
+      enrollment_token: ${{ steps.tf_output.outputs.enrollment_token }}
+      fleet_server_url: ${{ steps.tf_output.outputs.fleet_server_url }}
+      stack_version: ${{ steps.tf_output.outputs.stack_version }}
 
-  deploy-destroy:
+  # Enroll a Windows Agent.
+  windows-agent:
+    runs-on: windows-latest
+    needs:
+      - deploy
+    steps:
+      - name: Enroll Elastic Agent
+        env:
+          FLEET_SERVER_URL: ${{needs.deploy.outputs.fleet_server_url}}
+          ENROLLMENT_TOKEN: ${{needs.deploy.outputs.enrollment_token}}
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-${{needs.deploy.outputs.stack_version}}-windows-x86_64.zip -OutFile elastic-agent.zip
+          Expand-Archive .\elastic-agent.zip -DestinationPath .
+          cd elastic-agent-${{needs.deploy.outputs.stack_version}}-windows-x86_64
+          .\elastic-agent.exe install --non-interactive --url=$env:FLEET_SERVER_URL --enrollment-token=$env:ENROLLMENT_TOKEN
+
+      - name: Sleep while Elastic Agent collects data
+        shell: pwsh
+        run: |
+          Start-Sleep -Seconds 180
+
+  # Query Elasticsearch to verify data was ingested.
+  query-data:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+      - windows-agent
+    steps:
+      - name: Verify data streams contain data.
+        env:
+          API_KEY: ${{needs.deploy.outputs.count_reader_api_key}}
+          ES_URL: ${{needs.deploy.outputs.elasticsearch_url}}
+        run: |
+          declare -a data_streams
+          data_streams=(
+          logs-winlog.security-*
+          logs-winlog.windows-powershell-*
+          logs-winlog.powershell-operational-*
+          # Skipping logs-winlog.sysmon-* because it is not installed.
+          )
+
+          tmpfile=$(mktemp -t datastream_count.XXXX)
+
+          echo "### Verification Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Elastic Stack: ${{needs.deploy.outputs.stack_version}}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for i in "${data_streams[@]}"
+          do
+            if ! curl \
+              --fail-with-body \
+              --header "Authorization: ApiKey $API_KEY" \
+              -o "$tmpfile" \
+              "$ES_URL/${i}/_count";
+            then
+              echo "curl failed checking $i."
+              exit 1
+            fi
+
+            count=$(jq .count "$tmpfile")
+            if [[ "$count" -eq 0 ]]; then
+              echo "$i : No data found." >> $GITHUB_STEP_SUMMARY
+              exit 1
+            else
+              echo "$i : Got <$count> events." >> $GITHUB_STEP_SUMMARY
+            fi
+          done  
+
+  destroy:
     runs-on: ubuntu-latest
     if: ${{ success() || failure() }} # Always run cleanup.
     needs:
       - deploy
+      - windows-agent
+      - query-data
     environment: ess-testing
     steps:
       - name: Checkout
@@ -119,12 +214,3 @@ jobs:
         working-directory: .github/deploy
         env:
           EC_API_KEY: ${{ secrets.EC_API_KEY }}
-
-# TODO: Add a test job that will:
-#   Spin up Elastic Cloud.
-#   Create agent policy.
-#   Add winlog integration packages.
-#   Get enrollment key.
-#   Enroll a Windows Agent.
-#   Verify data is ingested.
-#   Tear down elastic cloud instance.

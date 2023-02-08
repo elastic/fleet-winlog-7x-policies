@@ -3,8 +3,9 @@
 resource "null_resource" "create-agent-policy" {
   provisioner "local-exec" {
     command = <<EOT
-curl -v -k \
+curl \
   -XPOST \
+  --fail-with-body \
   --header "Content-Type: application/json" \
   --header "kbn-xsrf: true" \
   --header "Authorization: $BASIC_AUTH" \
@@ -13,7 +14,7 @@ curl -v -k \
     "name" : "Windows",
     "description" : "Collect Windows event logs.",
     "namespace" : "default",
-    "monitoring_enabled" : []
+    "monitoring_enabled" : ["logs", "metrics"]
 })}'
 EOT
 
@@ -48,8 +49,47 @@ data "http" "get-agent-policy" {
   depends_on = [null_resource.create-agent-policy]
 }
 
+// Load a policy to read the winlog package version.
+data "local_file" "policy" {
+  filename = "${path.module}/../../policy-winlog-security.json"
+}
+
 locals {
   agent_policy_id = jsondecode(data.http.get-agent-policy.response_body).items[0].id
+
+  winlog_version = jsondecode(data.local_file.policy.content).package.version
+}
+
+// Prevent concurrency issues by installing the package before adding
+// package policies to Agent policy. It prevents errors like:
+//
+// {"statusCode":409,"error":"Conflict","message":"Error installing winlog
+// 1.10.0: Concurrent installation or upgrade of winlog-1.10.0 detected,
+// aborting."}
+//
+// The force parameter allows installation of the non-latest package version.
+resource "null_resource" "install-winlog" {
+  provisioner "local-exec" {
+    command = <<EOT
+curl \
+  -XPOST \
+  --fail-with-body \
+  --header "Content-Type: application/json" \
+  --header "kbn-xsrf: true" \
+  --header "Authorization: $BASIC_AUTH" \
+  "$KIBANA_URL/api/fleet/epm/packages/winlog/${local.winlog_version}" \
+  -d '{"force": true}'
+EOT
+
+    environment = {
+      BASIC_AUTH = local.basic_auth
+      KIBANA_URL = local.kibana_url
+    }
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
 }
 
 // Install package policies using the policy-*.json files in the root of this repo.
@@ -60,8 +100,9 @@ resource "null_resource" "add-winlog-integrations" {
 
   provisioner "local-exec" {
     command = <<EOT
-bash -c 'curl -v -k \
+bash -c 'curl \
   -XPOST \
+  --fail-with-body \
   --header "Content-Type: application/json" \
   --header "kbn-xsrf: true" \
   --header "Authorization: $BASIC_AUTH" \
@@ -79,6 +120,8 @@ EOT
   triggers = {
     always_run = timestamp()
   }
+
+  depends_on = [null_resource.install-winlog]
 }
 
 // Get enrollment tokens. Then we will filter the tokens to find the key
@@ -93,7 +136,7 @@ data "http" "enrollment-key" {
 
   lifecycle {
     postcondition {
-      condition     = contains([200, 400], self.status_code)
+      condition     = contains([200], self.status_code)
       error_message = "Status code invalid"
     }
   }

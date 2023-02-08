@@ -13,6 +13,7 @@ Assumptions:
 - Fleet winlog integration [version][winlog_changelog] is 1.10.0.
 - The "default" data stream namespace is used for all data streams.
 - Each Windows event log channel is configured with its own data stream (e.g. logs-winlog.security-default).
+- The mappings of the Fleet winlog integration are applied to the data.
 - The listed commands are executed from a directory containing the `policy-*.json`
 files contained in this repository.
 

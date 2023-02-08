@@ -32,7 +32,7 @@ variable "kibana_url" {
 variable "api_key" {
   type        = string
   description = "Elasticsearch API use to authenticate to Kibana (in base64 encoded format)."
-  default     = "Wl9jVEtZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
+  default     = "exampleZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
 }
 
 variable "winlogbeat_version" {
@@ -44,7 +44,7 @@ variable "winlogbeat_version" {
 variable "fleet_winlog_version" {
   type        = string
   description = "Version of the Fleet winlog integration. See https://docs.elastic.co/en/integrations/winlog#changelog"
-  default     = "1.10.0"
+  default     = "1.11.0"
 }
 
 variable "fleet_namespace" {

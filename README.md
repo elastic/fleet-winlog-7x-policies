@@ -10,7 +10,7 @@ from the respective Winlogbeat module into the Agent policy.
 Assumptions:
 
 - Winlogbeat module scripts are from version v7.17.9.
-- Fleet winlog integration [version][winlog_changelog] is 1.10.0.
+- Fleet winlog integration [version][winlog_changelog] is 1.11.0.
 - The "default" data stream namespace is used for all data streams.
 - Each Windows event log channel is configured with its own data stream (e.g. logs-winlog.security-default).
 - The mappings of the Fleet winlog integration are applied to the data.
@@ -39,7 +39,7 @@ This will add a new integration named `winlog-powershell-operational` in your Ag
 
 ```sh
 # Substitute in your own environment variable values.
-export API_KEY="Wl9jVEtZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
+export API_KEY="exampleZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
 export AGENT_POLICY_ID="87323640-a676-11ed-b7ad-57c2b61f1488"
 export KIBANA_URL="https://localhost:5601"
 
@@ -58,7 +58,7 @@ This will add a new integration named `winlog-security` in your Agent policy.
 
 ```sh
 # Substitute in your own environment variable values.
-export API_KEY="Wl9jVEtZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
+export API_KEY="exampleZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
 export AGENT_POLICY_ID="87323640-a676-11ed-b7ad-57c2b61f1488"
 export KIBANA_URL="https://localhost:5601"
 
@@ -77,7 +77,7 @@ This will add a new integration named `winlog-sysmon` in your Agent policy.
 
 ```sh
 # Substitute in your own environment variable values.
-export API_KEY="Wl9jVEtZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
+export API_KEY="exampleZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
 export AGENT_POLICY_ID="87323640-a676-11ed-b7ad-57c2b61f1488"
 export KIBANA_URL="https://localhost:5601"
 
@@ -96,7 +96,7 @@ This will add a new integration named `winlog-windows-powershell` in your Agent 
 
 ```sh
 # Substitute in your own environment variable values.
-export API_KEY="Wl9jVEtZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
+export API_KEY="exampleZWUJHTHZPZHRHMnlfci06Y3ByU0Jva1hUYWEwQmR0NzVZRlpSQQ=="
 export AGENT_POLICY_ID="87323640-a676-11ed-b7ad-57c2b61f1488"
 export KIBANA_URL="https://localhost:5601"
 

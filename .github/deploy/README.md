@@ -1,4 +1,4 @@
-# Deployment Test
+# Deployment Module
 
 This Terraform module deploys the package policies to an Elastic Cloud instance.
 
@@ -17,4 +17,4 @@ terraform provider. See https://github.com/elastic/terraform-provider-elasticsta
 The only value that needs updated is the `stack_version` variable. This
 should be updated to test with the latest stack release. And because this
 uses the Elastic Cloud Staging it is possible to test with pre-release
-stack versions.
+stack versions as needed.

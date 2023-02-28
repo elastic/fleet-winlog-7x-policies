@@ -44,7 +44,7 @@ variable "winlogbeat_version" {
 variable "fleet_winlog_version" {
   type        = string
   description = "Version of the Fleet winlog integration. See https://docs.elastic.co/en/integrations/winlog#changelog"
-  default     = "1.12.1"
+  default     = "1.12.2"
 }
 
 variable "fleet_namespace" {

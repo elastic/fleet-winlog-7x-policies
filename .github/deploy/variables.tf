@@ -1,6 +1,6 @@
 variable "stack_version" {
   description = "Elastic stack version"
-  default     = "8.8.1"
+  default     = "8.10.2"
 }
 
 variable "env_id" {

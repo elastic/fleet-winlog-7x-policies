@@ -38,7 +38,7 @@ variable "api_key" {
 variable "winlogbeat_version" {
   type        = string
   description = "Winlogbeat version to obtain the module script processor sources."
-  default     = "v7.17.13"
+  default     = "v7.17.14"
 }
 
 variable "fleet_winlog_version" {

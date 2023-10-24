@@ -44,7 +44,7 @@ variable "winlogbeat_version" {
 variable "fleet_winlog_version" {
   type        = string
   description = "Version of the Fleet winlog integration. See https://docs.elastic.co/en/integrations/winlog#changelog"
-  default     = "1.20.0"
+  default     = "2.0.0"
 }
 
 variable "fleet_namespace" {
@@ -99,7 +99,7 @@ locals {
       winlogs-winlog = {
         enabled = true
         streams = {
-          "winlog.winlog" = {
+          "winlog.winlogs" = {
             enabled = true
             vars = {
               channel                 = policy.channel

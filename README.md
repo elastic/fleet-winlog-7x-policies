@@ -10,7 +10,7 @@ from the respective Winlogbeat module into the Agent policy.
 Assumptions:
 
 - Winlogbeat module scripts are from version v7.17.14.
-- Fleet winlog integration [version][winlog_changelog] is 1.20.0.
+- Fleet winlog integration [version][winlog_changelog] is 2.0.0.
 - The "default" data stream namespace is used for all data streams.
 - Each Windows event log channel is configured with its own data stream (e.g. logs-winlog.security-default).
 - The mappings of the Fleet winlog integration are applied to the data.

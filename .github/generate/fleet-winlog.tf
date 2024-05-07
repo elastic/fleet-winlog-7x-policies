@@ -38,13 +38,13 @@ variable "api_key" {
 variable "winlogbeat_version" {
   type        = string
   description = "Winlogbeat version to obtain the module script processor sources."
-  default     = "v7.17.14"
+  default     = "v7.17.21"
 }
 
 variable "fleet_winlog_version" {
   type        = string
   description = "Version of the Fleet winlog integration. See https://docs.elastic.co/en/integrations/winlog#changelog"
-  default     = "2.0.0"
+  default     = "2.1.1"
 }
 
 variable "fleet_namespace" {
